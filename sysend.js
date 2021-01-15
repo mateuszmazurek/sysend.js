@@ -60,6 +60,14 @@
     function from_json(json) {
         return JSON.parse(json);
     }
+    function includes(arr, value) {
+        for (var i=arr.length; i--;) {
+            if (arr[i] === value) {
+                return true;
+            }
+        }
+        return false;
+    }
     var host = (function() {
         var a = document.createElement('a');
         return function(url) {
@@ -115,6 +123,8 @@
             }
         }, false);
     }
+    // array of whitelisted origins or null if whitelisting is not enabled (for proxy iframes)
+    var whitelist = null;
     // ref: https://stackoverflow.com/a/326076/387194
     function is_iframe() {
         try {
@@ -125,7 +135,7 @@
     }
     if (is_iframe()) {
       window.addEventListener('message', function(e) {
-          if (typeof e.data === 'string' && e.data.match(prefix_re)) {
+          if (typeof e.data === 'string' && e.data.match(prefix_re) && (!whitelist || includes(whitelist, e.origin))) {
               try {
                   var payload = JSON.parse(e.data);
                   if (payload && payload.name === uniq_prefix) {
@@ -178,6 +188,14 @@
                 });
                 document.body.appendChild(iframe);
                 iframe.src = proxy_url;
+            }
+        },
+        whitelist: function() {
+            if (!whitelist) {
+                whitelist = [window.location.origin];
+            }
+            if (arguments.length > 0) {
+                whitelist.push.apply(whitelist, arguments);
             }
         },
         on: function(event, fn) {

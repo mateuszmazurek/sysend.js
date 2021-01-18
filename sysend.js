@@ -161,7 +161,7 @@
             }
             send_to_iframes(event, message);
         },
-        proxy: function(url) {
+        proxy: function(url, onReady) {
             if (typeof url === 'string' && host(url) !== window.location.host) {
                 var iframe = document.createElement('iframe');
                 iframe.style.width = iframe.style.height = 0;
@@ -185,6 +185,9 @@
                     }
                     iframes.push({window: win, node: iframe});
                     iframe.removeEventListener('load', handler);
+                    if (typeof onReady === 'function') {
+                        onReady();
+                    }
                 });
                 document.body.appendChild(iframe);
                 iframe.src = proxy_url;

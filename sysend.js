@@ -1,5 +1,5 @@
 /**@license
- *  sysend.js - send messages between browser windows/tabs version 1.3.5
+ *  sysend.js - send messages between browser windows/tabs version 1.4.0
  *
  *  Copyright (C) 2014-2021 Jakub T. Jankiewicz <https://jcubic.pl/me>
  *  Released under the MIT license
@@ -22,7 +22,7 @@
     var uniq_prefix = '___sysend___';
     var prefix_re = new RegExp(uniq_prefix);
     var random_value = Math.random();
-    var serializer = {}, serialize, deserialize;
+    var serializer = {};
     // array of whitelisted origins or null if whitelisting is not enabled (for proxy iframes)
     var whitelist = null;
     // object with user events as keys and values arrays of callback functions
@@ -234,6 +234,16 @@
         });
     }
     // -------------------------------------------------------------------------
+    function is_private_mode() {
+        try {
+            localStorage.setItem(uniq_prefix, 1);
+            localStorage.removeItem(uniq_prefix);
+            return false;
+        } catch (e) {
+            return true;
+        }
+    }
+    // -------------------------------------------------------------------------
     function init() {
         // we need to clean up localStorage if broadcast called on unload
         // because setTimeout will never fire, even setTimeout 0
@@ -253,6 +263,10 @@
                     }
                 }
             });
+        } else if (is_private_mode()) {
+            console.warn('Your browser don\'t support localStorgage. ' +
+                         'In Safari this is most of the time because ' +
+                         'of "Private Browsing Mode"');
         } else {
             window.addEventListener('storage', function(e) {
                 // prevent event to be executed on remove in IE

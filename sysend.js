@@ -18,6 +18,7 @@
         root.sysend = factory();
     }
 })(typeof window !== "undefined" ? window : this, function() {
+    var lStorage = getLocalStorageObject();
     // we use prefix so `foo' event don't collide with `foo' locaStorage value
     var uniq_prefix = '___sysend___';
     var prefix_re = new RegExp(uniq_prefix);
@@ -125,20 +126,35 @@
         }
     };
     // -------------------------------------------------------------------------
+    function getLocalStorageObject() {
+        // when third-party cookies blocking is enabled accessing localStorage throws error so we return mocked one
+        try {
+            return localStorage;
+        } catch (err) {
+            console.warn('refused to access localStorage object', err);
+            function noop() {}
+            return {
+                getItem: noop,
+                setItem: noop,
+                removeItem: noop,
+            };
+        }
+    }
+    // -------------------------------------------------------------------------
     function get(key) {
-        return localStorage.getItem(uniq_prefix + key);
+        return lStorage.getItem(uniq_prefix + key);
     }
     // -------------------------------------------------------------------------
     function set(key, value) {
         // storage event is not fired when value is set first time
         if (id == 0) {
-            localStorage.setItem(uniq_prefix + key, random_value);
+            lStorage.setItem(uniq_prefix + key, random_value);
         }
-        localStorage.setItem(uniq_prefix + key, value);
+        lStorage.setItem(uniq_prefix + key, value);
     }
     // -------------------------------------------------------------------------
     function remove(key) {
-        localStorage.removeItem(uniq_prefix + key);
+        lStorage.removeItem(uniq_prefix + key);
     }
     // -------------------------------------------------------------------------
     function make_process(object, prop) {
@@ -248,9 +264,9 @@
         // we need to clean up localStorage if broadcast called on unload
         // because setTimeout will never fire, even setTimeout 0
         var re = new RegExp('^' + uniq_prefix);
-        for(var key in localStorage) {
+        for(var key in lStorage) {
             if (key.match(re)) {
-                localStorage.removeItem(key);
+                lStorage.removeItem(key);
             }
         }
         if (typeof window.BroadcastChannel === 'function') {
